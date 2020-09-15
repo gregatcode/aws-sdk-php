@@ -89,11 +89,11 @@ class ObjectCopierTest extends TestCase
                             $cmd['Bucket']
                         );
                         $this->assertEquals(
-                            '/arn:aws:s3:us-west-2:123456789012:accesspoint:mysource/sourceKey',
+                            rawurlencode('/arn:aws:s3:us-west-2:123456789012:accesspoint:mysource/sourceKey'),
                             $cmd['CopySource']
                         );
                         $this->assertEquals(
-                            '/arn:aws:s3:us-west-2:123456789012:accesspoint:mysource/sourceKey',
+                            rawurlencode('/arn:aws:s3:us-west-2:123456789012:accesspoint:mysource/sourceKey'),
                             $req->getHeader('x-amz-copy-source')[0]
                         );
                         break;
@@ -122,11 +122,11 @@ class ObjectCopierTest extends TestCase
                             $cmd['Bucket']
                         );
                         $this->assertEquals(
-                            '/arn:aws:s3:us-west-2:123456789012:accesspoint:mysource/sourceKey',
+                            rawurlencode('/arn:aws:s3:us-west-2:123456789012:accesspoint:mysource/sourceKey'),
                             $cmd['CopySource']
                         );
                         $this->assertEquals(
-                            '/arn:aws:s3:us-west-2:123456789012:accesspoint:mysource/sourceKey',
+                            rawurlencode('/arn:aws:s3:us-west-2:123456789012:accesspoint:mysource/sourceKey'),
                             $req->getHeader('x-amz-copy-source')[0]
                         );
                         break;
@@ -214,13 +214,13 @@ class ObjectCopierTest extends TestCase
         return [$smallHeadObject, $putObject];
     }
 
-    private function getMultipartMockResults()
+    private function getMultipartMockResults($key = 'key')
     {
         $smallHeadObject = new Result(['ContentLength' => 1024 * 1024 * 6]);
         $partCount = ceil($smallHeadObject['ContentLength'] / MultipartUploader::PART_MIN_SIZE);
         $initiate = new Result(['UploadId' => 'foo']);
         $putPart = new Result(['ETag' => 'bar']);
-        $complete = new Result(['Location' => 'https://bucket.s3.amazonaws.com/key']);
+        $complete = new Result(['Location' => 'https://bucket.s3.amazonaws.com/'.$key]);
 
         return array_merge(
             [$smallHeadObject, $initiate],
@@ -291,7 +291,7 @@ class ObjectCopierTest extends TestCase
             'Key' => 'newKey',
             'ACL' => 'private',
             'MetadataDirective' => 'COPY',
-            'CopySource' => '/bucket/key?versionId=V+ID',
+            'CopySource' => rawurlencode('/bucket/key?versionId=V+ID'),
         ];
 
         $client->expects($this->exactly(2))
@@ -435,22 +435,24 @@ class ObjectCopierTest extends TestCase
 
         $this->addMockResults(
             $client,
-            $this->getMultipartMockResults()
+            $this->getMultipartMockResults($expectedOutput)
         );
 
         $uploader = new ObjectCopier(
             $client,
             ['Bucket' => 'sourceBucket', 'Key' => $input],
             ['Bucket' => 'bucket', 'Key' => $input],
-            'private'
+            'private',
+            ['mup_threshold' => MultipartUploader::PART_MIN_SIZE]
         );
 
         $this->assertFalse($this->mockQueueEmpty());
         $result = $uploader->copy();
 
         $this->assertEquals(
-            $result['ObjectURL'],
-            "https://bucket.s3.amazonaws.com/{$expectedOutput}"
+            "https://bucket.s3.amazonaws.com/{$expectedOutput}",
+            $result['ObjectURL']
         );
+        $this->assertTrue($this->mockQueueEmpty());
     }
 }

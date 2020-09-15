@@ -104,7 +104,7 @@ class ObjectCopier implements PromisorInterface
                 $defaults = [
                     'ACL' => $this->acl,
                     'MetadataDirective' => 'COPY',
-                    'CopySource' => $this->getSourcePath(),
+                    'CopySource' => rawurlencode($this->getSourcePath()),
                 ];
 
                 $params = array_diff_key($this->options, self::$defaults)
@@ -153,7 +153,7 @@ class ObjectCopier implements PromisorInterface
                 );
             }
         }
-        $sourcePath = "/{$this->source['Bucket']}/" . rawurlencode($this->source['Key']);
+        $sourcePath = "/{$this->source['Bucket']}/{$this->source['Key']}";
 
         if (isset($this->source['VersionId'])) {
             $sourcePath .= "?versionId={$this->source['VersionId']}";

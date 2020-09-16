@@ -574,7 +574,7 @@ class StreamWrapperTest extends TestCase
         $this->assertEquals('/new_key', $entries[1]['request']->getUri()->getPath());
         $this->assertEquals('other.s3.amazonaws.com', $entries[1]['request']->getUri()->getHost());
         $this->assertEquals(
-            '/bucket/key',
+            rawurlencode('/bucket/key'),
             $entries[1]['request']->getHeaderLine('x-amz-copy-source')
         );
         $this->assertEquals(
@@ -606,7 +606,7 @@ class StreamWrapperTest extends TestCase
         $this->assertEquals('/new_key', $entries[1]['request']->getUri()->getPath());
         $this->assertEquals('other.s3.amazonaws.com', $entries[1]['request']->getUri()->getHost());
         $this->assertEquals(
-            '/bucket/key',
+            rawurlencode('/bucket/key'),
             $entries[1]['request']->getHeaderLine('x-amz-copy-source')
         );
         $this->assertEquals(
